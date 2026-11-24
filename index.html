@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111111" />
+    <title>One Goal</title>
+    <style>
+      :root {
+        --ink: #111111;
+        --accent: #c9a66b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background-color: var(--ink);
+        color: #ffffff;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      ::selection {
+        background: rgba(201, 166, 107, 0.3);
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      button {
+        font-family: inherit;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: none;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .page {
+        display: flex;
+        min-height: 100%;
+        flex-direction: column;
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6rem 1.5rem;
+      }
+
+      /* ---------- Empty state ---------- */
+
+      .empty {
+        width: 100%;
+        max-width: 36rem;
+        text-align: center;
+        animation: fade 0.4s ease-out;
+      }
+
+      .goal-input {
+        width: 100%;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        caret-color: var(--accent);
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        padding: 0 0 1rem;
+        transition: border-color 0.3s;
+      }
+
+      .goal-input::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+      }
+
+      .goal-input:focus {
+        border-bottom-color: rgba(201, 166, 107, 0.6);
+      }
+
+      @media (min-width: 768px) {
+        .goal-input {
+          font-size: 1.875rem;
+        }
+      }
+
+      .btn-lock {
+        margin-top: 2.5rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        padding: 0.75rem 1.5rem;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+        cursor: pointer;
+        transition:
+          color 0.3s,
+          border-color 0.3s;
+      }
+
+      .btn-lock:hover:not(:disabled) {
+        border-color: rgba(201, 166, 107, 0.5);
+        color: var(--accent);
+      }
+
+      .btn-lock:focus-visible:not(:disabled) {
+        border-color: rgba(201, 166, 107, 0.7);
+        color: var(--accent);
+      }
+
+      .btn-lock:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* ---------- Focus screen ---------- */
+
+      .focus {
+        width: 100%;
+        max-width: 42rem;
+        text-align: center;
+      }
+
+      .goal-text {
+        margin: 0 auto;
+        max-width: 42rem;
+        font-size: 1.875rem;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        animation: fade 0.5s ease-out;
+      }
+
+      @media (min-width: 768px) {
+        .goal-text {
+          font-size: 3rem;
+        }
+      }
+
+      .steps {
+        margin: 4rem auto 0;
+        width: 100%;
+        max-width: 24rem;
+        text-align: left;
+      }
+
+      .steps-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .step {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+        font-size: inherit;
+        color: #ffffff;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .step.done,
+      .step.locked {
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      .step.locked {
+        cursor: default;
+      }
+
+      .marker {
+        margin-top: 3px;
+        display: flex;
+        height: 1rem;
+        width: 1rem;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 1px solid rgba(201, 166, 107, 0.7);
+        transition:
+          background-color 0.3s,
+          border-color 0.3s;
+      }
+
+      .marker svg {
+        height: 0.625rem;
+        width: 0.625rem;
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .step.done .marker {
+        border-color: rgba(201, 166, 107, 0.4);
+        background-color: rgba(201, 166, 107, 0.1);
+      }
+
+      .step.done .marker svg {
+        opacity: 1;
+      }
+
+      .step.locked .marker {
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .step:not(.locked):hover .marker {
+        background-color: rgba(201, 166, 107, 0.1);
+      }
+
+      .step-label {
+        font-size: 1rem;
+        line-height: 1.375;
+        letter-spacing: -0.01em;
+      }
+
+      .step.done .step-label {
+        text-decoration: line-through;
+        text-decoration-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .add-form {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .add-form.standalone {
+        margin-top: 0;
+      }
+
+      .dashed {
+        margin-top: 7px;
+        height: 1rem;
+        width: 1rem;
+        flex: 0 0 auto;
+        border-radius: 9999px;
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+      }
+
+      .step-input {
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #ffffff;
+        caret-color: var(--accent);
+        font-family: inherit;
+        font-size: 1rem;
+        line-height: 1.375;
+        letter-spacing: -0.01em;
+      }
+
+      .step-input::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+      }
+
+      .add-btn {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.25);
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .add-btn:hover,
+      .add-btn:focus-visible {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .add-btn .dashed {
+        margin-top: 0;
+      }
+
+      /* ---------- Actions ---------- */
+
+      .actions {
+        margin-top: 5rem;
+      }
+
+      .default-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .btn-accomplish {
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        padding: 0.75rem 1.75rem;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+        cursor: pointer;
+        transition:
+          color 0.5s,
+          border-color 0.5s,
+          background-color 0.5s;
+      }
+
+      .btn-accomplish:hover {
+        border-color: rgba(255, 255, 255, 0.25);
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .btn-accomplish.all-done {
+        border-color: rgba(201, 166, 107, 0.7);
+        color: var(--accent);
+      }
+
+      .btn-accomplish.all-done:hover {
+        background-color: rgba(201, 166, 107, 0.1);
+      }
+
+      .btn-abandon {
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        color: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .btn-abandon:hover,
+      .btn-abandon:focus-visible {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      .confirm {
+        text-align: center;
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.4);
+        animation: fade 0.2s ease-out;
+      }
+
+      .confirm p {
+        margin: 0;
+      }
+
+      .confirm-row {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+      }
+
+      .confirm-row button {
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .confirm-yes {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .confirm-yes:hover,
+      .confirm-yes:focus-visible {
+        color: #ffffff;
+      }
+
+      .confirm-no {
+        color: rgba(201, 166, 107, 0.8);
+      }
+
+      .confirm-no:hover,
+      .confirm-no:focus-visible {
+        color: var(--accent);
+      }
+
+      /* ---------- Completed corner ---------- */
+
+      .completed-corner {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        text-align: right;
+      }
+
+      .completed-toggle {
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .completed-toggle:hover,
+      .completed-toggle:focus-visible {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .completed-panel {
+        margin-bottom: 0.75rem;
+        width: 15rem;
+        max-height: 16rem;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        background-color: #181818;
+        padding: 1rem;
+        text-align: left;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      }
+
+      .completed-title {
+        margin: 0 0 0.75rem;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      .completed-panel ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .completed-panel li {
+        font-size: 0.75rem;
+        line-height: 1.625;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .completed-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .completed-date {
+        margin-left: 0.375rem;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.2);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <main>
+        <form id="empty" class="empty" autocomplete="off">
+          <input
+            id="goal-input"
+            class="goal-input"
+            placeholder="What is your 1 goal right now?"
+            aria-label="What is your 1 goal right now?"
+            maxlength="140"
+            spellcheck="false"
+          />
+          <button id="lock" class="btn-lock" type="submit" disabled>Lock it in</button>
+        </form>
+
+        <div id="focus" class="focus" hidden>
+          <h1 id="goal-title" class="goal-text"></h1>
+
+          <section class="steps">
+            <ul id="steps-list" class="steps-list"></ul>
+
+            <form id="step-form" class="add-form" autocomplete="off">
+              <span class="dashed" aria-hidden="true"></span>
+              <input
+                id="step-input"
+                class="step-input"
+                placeholder="Add a next action"
+                aria-label="Add a next action"
+                maxlength="120"
+                spellcheck="false"
+              />
+            </form>
+
+            <button id="add-btn" class="add-btn" type="button" hidden>
+              <span class="dashed" aria-hidden="true"></span>
+              Add a next action
+            </button>
+          </section>
+
+          <div class="actions">
+            <div id="default-actions" class="default-actions">
+              <button id="accomplish" class="btn-accomplish" type="button">
+                Goal Accomplished
+              </button>
+              <button id="abandon-btn" class="btn-abandon" type="button">Abandon</button>
+            </div>
+
+            <div id="confirm" class="confirm" hidden>
+              <p>Abandon this goal?</p>
+              <div class="confirm-row">
+                <button id="confirm-yes" class="confirm-yes" type="button">
+                  Yes, abandon
+                </button>
+                <button id="confirm-no" class="confirm-no" type="button">
+                  Keep going
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <div id="corner" class="completed-corner" hidden>
+        <div id="panel" class="completed-panel" hidden>
+          <p class="completed-title">Completed</p>
+          <ul id="panel-list"></ul>
+        </div>
+        <button
+          id="corner-toggle"
+          class="completed-toggle"
+          type="button"
+          aria-expanded="false"
+        >
+          Completed &middot; 0
+        </button>
+      </div>
+    </div>
+
+    <script>
+      ;(function () {
+        'use strict'
+
+        var STORAGE_KEY = 'one-goal.v1'
+        var MAX_STEPS = 3
+        var CHECK_SVG =
+          '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.5 4.8 8.8 9.5 3.5"/></svg>'
+
+        var el = {
+          empty: document.getElementById('empty'),
+          goalInput: document.getElementById('goal-input'),
+          lock: document.getElementById('lock'),
+          focus: document.getElementById('focus'),
+          goalTitle: document.getElementById('goal-title'),
+          stepsList: document.getElementById('steps-list'),
+          stepForm: document.getElementById('step-form'),
+          stepInput: document.getElementById('step-input'),
+          addBtn: document.getElementById('add-btn'),
+          defaultActions: document.getElementById('default-actions'),
+          accomplish: document.getElementById('accomplish'),
+          abandonBtn: document.getElementById('abandon-btn'),
+          confirm: document.getElementById('confirm'),
+          confirmYes: document.getElementById('confirm-yes'),
+          confirmNo: document.getElementById('confirm-no'),
+          corner: document.getElementById('corner'),
+          panel: document.getElementById('panel'),
+          panelList: document.getElementById('panel-list'),
+          cornerToggle: document.getElementById('corner-toggle'),
+        }
+
+        var addingStep = false
+        var state = load()
+
+        function uid() {
+          if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID()
+          }
+          return String(Date.now()) + Math.random().toString(16).slice(2)
+        }
+
+        function normalizeGoal(raw) {
+          if (!raw || typeof raw.text !== 'string' || !raw.text.trim()) return null
+          var steps = Array.isArray(raw.steps)
+            ? raw.steps
+                .filter(function (s) {
+                  return s && typeof s.text === 'string' && s.text.trim()
+                })
+                .slice(0, MAX_STEPS)
+                .map(function (s) {
+                  return {
+                    id: s.id || uid(),
+                    text: s.text.trim(),
+                    done: Boolean(s.done),
+                  }
+                })
+            : []
+          return {
+            id: raw.id || uid(),
+            text: raw.text.trim(),
+            createdAt: raw.createdAt || Date.now(),
+            steps: steps,
+          }
+        }
+
+        function load() {
+          try {
+            var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+            return {
+              goal: normalizeGoal(parsed && parsed.goal),
+              completed: Array.isArray(parsed && parsed.completed)
+                ? parsed.completed.filter(function (c) {
+                    return c && typeof c.text === 'string'
+                  })
+                : [],
+            }
+          } catch (err) {
+            return { goal: null, completed: [] }
+          }
+        }
+
+        function persist() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+          } catch (err) {
+            /* storage can be unavailable; the session still works */
+          }
+        }
+
+        function formatDate(ts) {
+          try {
+            return new Date(ts).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+            })
+          } catch (err) {
+            return ''
+          }
+        }
+
+        function activeIndex() {
+          if (!state.goal) return -1
+          for (var i = 0; i < state.goal.steps.length; i++) {
+            if (!state.goal.steps[i].done) return i
+          }
+          return -1
+        }
+
+        function renderSteps() {
+          var steps = state.goal ? state.goal.steps : []
+          var current = activeIndex()
+          el.stepsList.innerHTML = ''
+
+          steps.forEach(function (step, index) {
+            var isDone = step.done
+            var isActive = index === current
+            var isLocked = !isDone && !isActive
+
+            var li = document.createElement('li')
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.className = 'step' + (isDone ? ' done' : '') + (isLocked ? ' locked' : '')
+            btn.disabled = isLocked
+            btn.setAttribute('aria-pressed', String(isDone))
+            btn.title = isLocked ? 'Finish the current step first' : ''
+
+            var marker = document.createElement('span')
+            marker.className = 'marker'
+            marker.setAttribute('aria-hidden', 'true')
+            marker.innerHTML = CHECK_SVG
+
+            var label = document.createElement('span')
+            label.className = 'step-label'
+            label.textContent = step.text
+
+            btn.appendChild(marker)
+            btn.appendChild(label)
+            btn.addEventListener('click', function () {
+              toggleStep(step.id)
+            })
+            li.appendChild(btn)
+            el.stepsList.appendChild(li)
+          })
+
+          var canAdd = steps.length < MAX_STEPS
+          var showForm = canAdd && (addingStep || steps.length === 0)
+          el.stepForm.hidden = !showForm
+          el.stepForm.classList.toggle('standalone', steps.length === 0)
+          el.addBtn.hidden = !(canAdd && !addingStep && steps.length > 0)
+
+          var allDone = steps.length > 0 && current === -1
+          el.accomplish.classList.toggle('all-done', allDone)
+        }
+
+        function renderCompleted() {
+          var items = state.completed
+          el.corner.hidden = items.length === 0
+          el.cornerToggle.innerHTML = 'Completed &middot; ' + items.length
+          el.panelList.innerHTML = ''
+
+          items.forEach(function (item) {
+            var li = document.createElement('li')
+            var text = document.createElement('span')
+            text.className = 'completed-text'
+            text.textContent = item.text
+            var date = document.createElement('span')
+            date.className = 'completed-date'
+            date.textContent = formatDate(item.completedAt)
+            li.appendChild(text)
+            li.appendChild(date)
+            el.panelList.appendChild(li)
+          })
+        }
+
+        function setActions(confirming) {
+          el.defaultActions.hidden = confirming
+          el.confirm.hidden = !confirming
+        }
+
+        function render() {
+          var goal = state.goal
+          el.empty.hidden = Boolean(goal)
+          el.focus.hidden = !goal
+          el.lock.disabled = !el.goalInput.value.trim()
+
+          if (goal) {
+            el.goalTitle.textContent = goal.text
+            renderSteps()
+            setActions(false)
+          }
+          renderCompleted()
+        }
+
+        function lockIn(event) {
+          event.preventDefault()
+          var text = el.goalInput.value.trim()
+          if (!text) return
+          state.goal = { id: uid(), text: text, createdAt: Date.now(), steps: [] }
+          addingStep = false
+          el.goalInput.value = ''
+          el.lock.disabled = true
+          persist()
+          render()
+        }
+
+        function toggleStep(id) {
+          if (!state.goal) return
+          var steps = state.goal.steps
+          var current = activeIndex()
+          for (var i = 0; i < steps.length; i++) {
+            if (steps[i].id !== id) continue
+            if (!steps[i].done && i !== current) return
+            steps[i].done = !steps[i].done
+            persist()
+            renderSteps()
+            return
+          }
+        }
+
+        function addStep(event) {
+          event.preventDefault()
+          var text = el.stepInput.value.trim()
+          if (!text || !state.goal || state.goal.steps.length >= MAX_STEPS) return
+          state.goal.steps.push({ id: uid(), text: text, done: false })
+          el.stepInput.value = ''
+          persist()
+          renderSteps()
+          el.stepInput.focus()
+        }
+
+        function accomplishGoal() {
+          if (!state.goal) return
+          state.completed.unshift({
+            id: uid(),
+            text: state.goal.text,
+            completedAt: Date.now(),
+          })
+          state.goal = null
+          addingStep = false
+          el.stepInput.value = ''
+          el.panel.hidden = true
+          el.cornerToggle.setAttribute('aria-expanded', 'false')
+          persist()
+          render()
+          el.goalInput.focus()
+        }
+
+        function abandonGoal() {
+          state.goal = null
+          addingStep = false
+          el.stepInput.value = ''
+          persist()
+          render()
+          el.goalInput.focus()
+        }
+
+        el.goalInput.addEventListener('input', function () {
+          el.lock.disabled = !el.goalInput.value.trim()
+        })
+        el.empty.addEventListener('submit', lockIn)
+        el.stepForm.addEventListener('submit', addStep)
+        el.addBtn.addEventListener('click', function () {
+          addingStep = true
+          renderSteps()
+          el.stepInput.focus()
+        })
+        el.stepInput.addEventListener('blur', function () {
+          if (el.stepInput.value.trim()) return
+          if (state.goal && state.goal.steps.length > 0) {
+            addingStep = false
+            renderSteps()
+          }
+        })
+        el.accomplish.addEventListener('click', accomplishGoal)
+        el.abandonBtn.addEventListener('click', function () {
+          setActions(true)
+          el.confirmNo.focus()
+        })
+        el.confirmNo.addEventListener('click', function () {
+          setActions(false)
+          el.abandonBtn.focus()
+        })
+        el.confirmYes.addEventListener('click', abandonGoal)
+        el.cornerToggle.addEventListener('click', function () {
+          var show = el.panel.hidden
+          el.panel.hidden = !show
+          el.cornerToggle.setAttribute('aria-expanded', String(show))
+        })
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && !el.confirm.hidden) {
+            setActions(false)
+            el.abandonBtn.focus()
+          }
+        })
+
+        render()
+        if (state.goal) {
+          renderSteps()
+        } else {
+          el.goalInput.focus()
+        }
+      })()
+    </script>
+  </body>
+</html>
